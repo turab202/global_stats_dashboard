@@ -1,25 +1,15 @@
 import 'package:flutter/material.dart';
 
-final Color primaryBlack = Color(0xff202c3b);
+const primaryColor = Color(0xFF1E88E5);
 
-final ThemeData lightTheme = ThemeData(
+final lightTheme = ThemeData(
+  useMaterial3: true,
+  colorSchemeSeed: primaryColor,
   brightness: Brightness.light,
-  primaryColor: primaryBlack,
-  scaffoldBackgroundColor: Colors.white,
-  fontFamily: 'Circular',
-  appBarTheme: AppBarTheme(
-    backgroundColor: primaryBlack,
-    foregroundColor: Colors.white,
-  ),
 );
 
-final ThemeData darkTheme = ThemeData(
+final darkTheme = ThemeData(
+  useMaterial3: true,
+  colorSchemeSeed: primaryColor,
   brightness: Brightness.dark,
-  primaryColor: primaryBlack,
-  scaffoldBackgroundColor: Colors.blueGrey[900],
-  fontFamily: 'Circular',
-  appBarTheme: AppBarTheme(
-    backgroundColor: primaryBlack,
-    foregroundColor: Colors.white,
-  ),
 );
