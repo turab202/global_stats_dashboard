@@ -1,55 +1,63 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
+
 import '../widgets/stat_card.dart';
 import '../widgets/chart_panel.dart';
-import '../../../core/theme/theme.dart';
 
 // --- Riverpod Provider for global stats ---
 final globalStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final dio = Dio(
+    BaseOptions(
+      connectTimeout: Duration(seconds: 10),
+      receiveTimeout: Duration(seconds: 10),
+    ),
+  );
+
   try {
-    final response = await Dio().get('https://corona.lmao.ninja/v2/all');
-    return response.data;
+    final response =
+        await dio.get('https://disease.sh/v3/covid-19/all');
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(response.data);
+    } else {
+      throw Exception('API error');
+    }
   } catch (e) {
-    throw Exception('Failed to load global stats');
+    throw Exception('Network error');
   }
 });
 
 class HomePage extends ConsumerWidget {
+  const HomePage({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(globalStatsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Global Stats Dashboard'),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Theme.of(context).brightness == Brightness.light
-                  ? Icons.dark_mode
-                  : Icons.light_mode,
-            ),
-            onPressed: () {
-              // toggle theme using ThemeMode.system is for later
-            },
-          )
-        ],
+        title: const Text('Global Stats Dashboard'),
       ),
       body: statsAsync.when(
-        loading: () => Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading data')),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => const Center(
+          child: Text(
+            'Error loading data.\nCheck internet connection.',
+            textAlign: TextAlign.center,
+          ),
+        ),
         data: (data) {
           return RefreshIndicator(
-            onRefresh: () async => ref.refresh(globalStatsProvider),
+            onRefresh: () async {
+              ref.invalidate(globalStatsProvider);
+            },
             child: SingleChildScrollView(
-              physics: AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.all(12),
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Animated Global Stats Cards ---
                   StatCard(
                     title: 'Total Cases',
                     count: data['cases'].toString(),
@@ -61,27 +69,11 @@ class HomePage extends ConsumerWidget {
                     color: Colors.redAccent,
                   ),
                   StatCard(
-                    title: 'Total Recovered',
+                    title: 'Recovered',
                     count: data['recovered'].toString(),
                     color: Colors.green,
                   ),
-                  SizedBox(height: 20),
-                  // --- Placeholder for Country Panel ---
-                  Text(
-                    'Regional Stats (Coming Next)',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10),
-                  Container(
-                    height: 150,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Center(child: Text('Country panel will be here')),
-                  ),
-                  SizedBox(height: 20),
-                  // --- Chart Panel (placeholder) ---
+                  const SizedBox(height: 24),
                   ChartPanel(data: data),
                 ],
               ),
